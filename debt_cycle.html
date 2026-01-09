@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORLD BUILDER // MACRO TERMINAL</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #111111;
+            --text-main: #e0e0e0;
+            --text-muted: #555555;
+            --accent-green: #00FF41;
+            --accent-amber: #FFD700;
+            --accent-red: #FF0033;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* CRT Scanline Effect */
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+        }
+
+        .dashboard-container {
+            width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 15px;
+            background: #000;
+            border: 1px solid #333;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .header {
+            grid-column: span 2;
+            border-bottom: 2px solid var(--text-muted);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--accent-green);
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .meta-info {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            border-left: 3px solid var(--accent-green);
+            padding-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .big-number {
+            font-size: 56px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .sub-text {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Chart Bars */
+        .bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #222;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 1s ease-in-out;
+            position: relative;
+        }
+
+        /* Specific Color Classes */
+        .text-green { color: var(--accent-green); }
+        .text-amber { color: var(--accent-amber); }
+        .text-red { color: var(--accent-red); }
+
+        .bg-green { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+        .bg-amber { background-color: var(--accent-amber); box-shadow: 0 0 10px var(--accent-amber); }
+        .bg-red { background-color: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+
+        .footer {
+            grid-column: span 2;
+            margin-top: 10px;
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #222;
+            padding-top: 10px;
+        }
+
+        /* Marker lines for charts */
+        .marker {
+            position: absolute;
+            top: -5px;
+            bottom: -5px;
+            width: 2px;
+            background-color: #fff;
+            z-index: 10;
+        }
+        .marker-label {
+            position: absolute;
+            top: -20px;
+            font-size: 10px;
+            color: white;
+            transform: translateX(-50%);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1>END OF THE DEBT CYCLE</h1>
+                <div class="sub-text">MACRO ECONOMIC DELEVERAGING TRACKER</div>
+            </div>
+            <div class="meta-info text-right">
+                <div id="date-display">DATE: JAN 08 2026</div>
+                <div>STATUS: <span class="text-green">ACTIVE</span></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Deleveraging Engine (Spread)</div>
+            <div class="big-number" id="spread-val">--%</div>
+            <div class="sub-text">Nominal GDP Growth vs. 10Y Treasury Yield</div>
+            <div class="sub-text" style="margin-top:5px;">Target: > 0% (Positive spread melts debt)</div>
+
+            <div class="bar-container" style="margin-top: 25px;">
+                <div id="spread-bar" class="bar-fill bg-green" style="width: 0%;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#555; margin-top:5px;">
+                <span>0%</span>
+                <span>5%</span>
+                <span>10%</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Productivity Velocity</div>
+            <div class="big-number" id="prod-val">--%</div>
+            <div class="sub-text">Non-Farm Productivity Growth</div>
+
+            <div class="bar-container" style="margin-top: 25px;">
+                <div class="marker" style="left: 41.6%;"></div> <div class="marker-label" style="left: 41.6%;">TARGET 2.5%</div>
+                <div id="prod-bar" class="bar-fill bg-green" style="width: 0%;"></div>
+            </div>
+             <div style="display:flex; justify-content:space-between; font-size:10px; color:#555; margin-top:5px;">
+                <span>0%</span>
+                <span>3%</span>
+                <span>6%</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Real Interest Rate</div>
+            <div class="big-number" id="real-val">--%</div>
+            <div class="sub-text">10Y Yield minus CPI</div>
+            <div class="sub-text" style="margin-top:5px;">Warning Level: > 1.5%</div>
+
+             <div class="bar-container" style="margin-top: 25px;">
+                <div class="marker" style="left: 37.5%;"></div> <div class="marker-label" style="left: 37.5%;">WARN</div>
+                <div id="real-bar" class="bar-fill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Data Signal Quality</div>
+            <div class="big-number" id="quality-text">CLEAN</div>
+            <div class="sub-text">GDP Distortion Monitor</div>
+            <div class="sub-text" id="quality-desc" style="margin-top:5px;">No anomalies detected.</div>
+        </div>
+
+        <div class="footer">
+            <div>SYSTEM: WORLD_BUILDER_V1 // ID: 8afe739a</div>
+            <div>CONFIDENTIAL // EYES ONLY</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. LIVE DATA INPUTS (UPDATE HERE)
+        // ==========================================
+        const DATA_DATE = "JAN 08 2026";
+
+        // Input Metrics
+        const GDP_REAL = 5.4;        // Atlanta Fed GDPNow
+        const INFLATION = 2.4;       // CPI Estimate
+        const YIELD_10Y = 4.18;      // 10Y Treasury
+        const PRODUCTIVITY = 4.5;    // Recent Trend
+        const QUALITY_SCORE = 4;     // 0=Good, 10=Bad (Gold/Inventory distortion)
+
+        // ==========================================
+        // 2. CALCULATIONS
+        // ==========================================
+        const gdp_nominal = GDP_REAL + INFLATION;
+        const spread = gdp_nominal - YIELD_10Y;
+        const real_rate = YIELD_10Y - INFLATION;
+
+        // ==========================================
+        // 3. RENDER LOGIC
+        // ==========================================
+        document.getElementById('date-display').textContent = "DATE: " + DATA_DATE;
+
+        // PANEL 1: SPREAD
+        const spreadEl = document.getElementById('spread-val');
+        const spreadBar = document.getElementById('spread-bar');
+        spreadEl.textContent = "+" + spread.toFixed(2) + "%";
+        // Scale: 0 to 10%
+        let spreadPct = (spread / 10) * 100;
+        if(spreadPct > 100) spreadPct = 100;
+        spreadBar.style.width = spreadPct + "%";
+
+        if(spread < 0) {
+            spreadEl.className = "big-number text-red";
+            spreadBar.className = "bar-fill bg-red";
+        } else {
+            spreadEl.className = "big-number text-green";
+            spreadBar.className = "bar-fill bg-green";
+        }
+
+        // PANEL 2: PRODUCTIVITY
+        const prodEl = document.getElementById('prod-val');
+        const prodBar = document.getElementById('prod-bar');
+        prodEl.textContent = PRODUCTIVITY.toFixed(1) + "%";
+        // Scale: 0 to 6%
+        let prodPct = (PRODUCTIVITY / 6) * 100;
+        prodBar.style.width = prodPct + "%";
+
+        if(PRODUCTIVITY < 2.5) {
+            prodEl.className = "big-number text-red";
+            prodBar.className = "bar-fill bg-red";
+        } else {
+            prodEl.className = "big-number text-green";
+            prodBar.className = "bar-fill bg-green";
+        }
+
+        // PANEL 3: REAL RATE
+        const realEl = document.getElementById('real-val');
+        const realBar = document.getElementById('real-bar');
+        realEl.textContent = real_rate.toFixed(2) + "%";
+        // Scale: 0 to 4%
+        let realPct = (real_rate / 4) * 100;
+        realBar.style.width = realPct + "%";
+
+        if(real_rate < 1.0) {
+            realEl.className = "big-number text-green";
+            realBar.className = "bar-fill bg-green";
+        } else if (real_rate < 1.6) {
+            realEl.className = "big-number text-amber";
+            realBar.className = "bar-fill bg-amber";
+        } else {
+            realEl.className = "big-number text-red";
+            realBar.className = "bar-fill bg-red";
+        }
+
+        // PANEL 4: QUALITY
+        const qualText = document.getElementById('quality-text');
+        const qualDesc = document.getElementById('quality-desc');
+
+        if(QUALITY_SCORE < 3) {
+            qualText.textContent = "CLEAN";
+            qualText.className = "big-number text-green";
+            qualDesc.textContent = "Data is organic and reliable.";
+        } else if (QUALITY_SCORE < 6) {
+            qualText.textContent = "DISTORTED";
+            qualText.className = "big-number text-amber";
+            qualDesc.textContent = "Skewed by Gold Exports / Inventory.";
+        } else {
+            qualText.textContent = "FAKE";
+            qualText.className = "big-number text-red";
+            qualDesc.textContent = "High probability of accounting mirage.";
+        }
+
+    </script>
+</body>
+</html>
