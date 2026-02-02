@@ -32,10 +32,11 @@
         }
 
         .dashboard-container {
-            width: 1200px;
+            max-width: 1200px;
+            width: 100%;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto auto;
+            grid-auto-rows: auto;
             gap: 15px;
             background: #000;
             border: 1px solid #333;
@@ -96,6 +97,35 @@
             color: var(--text-muted);
         }
 
+        .basis-line {
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .help-text {
+            font-size: 11px;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .last-updated {
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .mini-metrics {
+            display: grid;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-main);
+        }
+
+        .mini-metrics span {
+            color: var(--text-muted);
+        }
+
         /* Chart Bars */
         .bar-container {
             width: 100%;
@@ -148,6 +178,22 @@
             transform: translateX(-50%);
         }
 
+        @media (max-width: 820px) {
+            body {
+                padding: 10px;
+            }
+
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .header,
+            .footer {
+                grid-column: span 1;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -167,7 +213,8 @@
         <div class="panel">
             <div class="panel-title">Deleveraging Engine (Spread)</div>
             <div class="big-number" id="spread-val">--%</div>
-            <div class="sub-text">Nominal GDP Growth vs. 10Y Treasury Yield</div>
+            <div class="basis-line" id="spread-basis">Basis: --</div>
+            <div class="sub-text" id="spread-label">Nominal GDP Growth vs. 10Y Treasury Yield</div>
             <div class="sub-text" style="margin-top:5px;">Target: > 0% (Positive spread melts debt)</div>
 
             <div class="bar-container" style="margin-top: 25px;">
@@ -178,12 +225,14 @@
                 <span>5%</span>
                 <span>10%</span>
             </div>
+            <div class="last-updated" id="spread-updated">Last updated: --</div>
         </div>
 
         <div class="panel">
             <div class="panel-title">Productivity Velocity</div>
             <div class="big-number" id="prod-val">--%</div>
-            <div class="sub-text">Non-Farm Productivity Growth</div>
+            <div class="basis-line" id="prod-basis">Basis: --</div>
+            <div class="sub-text" id="prod-label">Non-Farm Productivity Growth</div>
 
             <div class="bar-container" style="margin-top: 25px;">
                 <div class="marker" style="left: 41.6%;"></div> <div class="marker-label" style="left: 41.6%;">TARGET 2.5%</div>
@@ -194,18 +243,35 @@
                 <span>3%</span>
                 <span>6%</span>
             </div>
+            <div class="last-updated" id="prod-updated">Last updated: --</div>
         </div>
 
         <div class="panel">
             <div class="panel-title">Real Interest Rate</div>
             <div class="big-number" id="real-val">--%</div>
-            <div class="sub-text">10Y Yield minus CPI</div>
+            <div class="basis-line" id="real-basis">Basis: --</div>
+            <div class="sub-text" id="real-label">10Y TIPS real yield</div>
+            <div class="sub-text" id="real-proxy" style="margin-top:5px;">Trailing CPI proxy: --%</div>
             <div class="sub-text" style="margin-top:5px;">Warning Level: > 1.5%</div>
 
              <div class="bar-container" style="margin-top: 25px;">
                 <div class="marker" style="left: 37.5%;"></div> <div class="marker-label" style="left: 37.5%;">WARN</div>
                 <div id="real-bar" class="bar-fill" style="width: 0%;"></div>
             </div>
+            <div class="last-updated" id="real-updated">Last updated: --</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Debt Dynamics</div>
+            <div class="big-number" id="pressure-val">--</div>
+            <div class="basis-line">Basis: % of GDP/year</div>
+            <div class="sub-text">Debt/GDP pressure ≈ (r − g)·Debt/GDP + Primary Deficit</div>
+            <div class="mini-metrics" style="margin-top:10px;">
+                <div>r − g (nominal): <span id="rg-val">--%</span></div>
+                <div>Debt/GDP: <span id="debt-val">--</span></div>
+                <div>Primary Balance: <span id="pb-val">--%</span></div>
+            </div>
+            <div class="last-updated" id="debt-updated">Last updated: --</div>
         </div>
 
         <div class="panel">
@@ -213,6 +279,42 @@
             <div class="big-number" id="quality-text">CLEAN</div>
             <div class="sub-text">GDP Distortion Monitor</div>
             <div class="sub-text" id="quality-desc" style="margin-top:5px;">No anomalies detected.</div>
+            <div class="help-text">Manual 0-10 score; higher = more distortion.</div>
+            <div class="last-updated" id="quality-updated">Last updated: --</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Primary Balance</div>
+            <div class="big-number" id="primary-val">--%</div>
+            <div class="basis-line">Basis: % of GDP</div>
+            <div class="sub-text">Surplus (+) vs. Deficit (-)</div>
+
+            <div class="bar-container" style="margin-top: 25px;">
+                <div id="primary-bar" class="bar-fill bg-green" style="width: 0%;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#555; margin-top:5px;">
+                <span>+2%</span>
+                <span>-4%</span>
+                <span>-10%</span>
+            </div>
+            <div class="last-updated" id="primary-updated">Last updated: --</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Interest Burden</div>
+            <div class="big-number" id="interest-val">--%</div>
+            <div class="basis-line" id="interest-basis">Basis: --</div>
+            <div class="sub-text" id="interest-desc">Net interest outlays</div>
+
+            <div class="bar-container" style="margin-top: 25px;">
+                <div id="interest-bar" class="bar-fill bg-green" style="width: 0%;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; color:#555; margin-top:5px;">
+                <span>Low</span>
+                <span>Mid</span>
+                <span>High</span>
+            </div>
+            <div class="last-updated" id="interest-updated">Last updated: --</div>
         </div>
 
         <div class="footer">
@@ -225,96 +327,225 @@
         // ==========================================
         // 1. LIVE DATA INPUTS (UPDATE HERE)
         // ==========================================
-        const DATA_DATE = "JAN 08 2026";
-
-        // Input Metrics
-        const GDP_REAL = 5.4;        // Atlanta Fed GDPNow
-        const INFLATION = 2.4;       // CPI Estimate
-        const YIELD_10Y = 4.18;      // 10Y Treasury
-        const PRODUCTIVITY = 4.5;    // Recent Trend
-        const QUALITY_SCORE = 4;     // 0=Good, 10=Bad (Gold/Inventory distortion)
+        const macroData = {
+            dataDate: "JAN 08 2026",
+            nominalGdpGrowth: 5.9,          // SAAR (quarterly annualized), %
+            nominalGdpBasis: "SAAR (quarterly annualized)",
+            yield10y: 4.18,                 // Nominal annual yield, %
+            cpiInflation: 2.4,              // YoY, %
+            cpiBasis: "YoY",
+            realYield10y: 1.6,              // 10Y TIPS real yield, %
+            productivityGrowth: 4.5,        // YoY, %
+            productivityBasis: "YoY",
+            primaryBalancePctGdp: -3.2,     // + surplus, - deficit
+            netInterestPctGdp: 2.6,         // % of GDP
+            netInterestPctRevenue: null,    // % of revenue (optional)
+            debtToGdp: 120,                 // % of GDP (optional)
+            qualityScore: 4,                // 0=Good, 10=Bad (Gold/Inventory distortion)
+            lastUpdated: {
+                spread: "JAN 05 2026",
+                productivity: "DEC 31 2025",
+                realRate: "JAN 05 2026",
+                debtDynamics: "JAN 05 2026",
+                quality: "JAN 05 2026",
+                primaryBalance: "OCT 31 2025",
+                interestBurden: "OCT 31 2025"
+            }
+        };
 
         // ==========================================
         // 2. CALCULATIONS
         // ==========================================
-        const gdp_nominal = GDP_REAL + INFLATION;
-        const spread = gdp_nominal - YIELD_10Y;
-        const real_rate = YIELD_10Y - INFLATION;
+        const updateDashboard = (data) => {
+            const spread = data.nominalGdpGrowth - data.yield10y;
+            const trailingRealProxy = data.yield10y - data.cpiInflation;
+            const rMinusG = data.yield10y - data.nominalGdpGrowth;
 
-        // ==========================================
-        // 3. RENDER LOGIC
-        // ==========================================
-        document.getElementById('date-display').textContent = "DATE: " + DATA_DATE;
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+            const formatPercent = (value, decimals = 2) => `${value.toFixed(decimals)}%`;
+            const formatMaybe = (value, decimals = 2) => (Number.isFinite(value) ? formatPercent(value, decimals) : "--");
 
-        // PANEL 1: SPREAD
-        const spreadEl = document.getElementById('spread-val');
-        const spreadBar = document.getElementById('spread-bar');
-        spreadEl.textContent = "+" + spread.toFixed(2) + "%";
-        // Scale: 0 to 10%
-        let spreadPct = (spread / 10) * 100;
-        if(spreadPct > 100) spreadPct = 100;
-        spreadBar.style.width = spreadPct + "%";
+            document.getElementById('date-display').textContent = "DATE: " + data.dataDate;
 
-        if(spread < 0) {
-            spreadEl.className = "big-number text-red";
-            spreadBar.className = "bar-fill bg-red";
-        } else {
-            spreadEl.className = "big-number text-green";
-            spreadBar.className = "bar-fill bg-green";
-        }
+            // PANEL 1: SPREAD
+            const spreadEl = document.getElementById('spread-val');
+            const spreadBar = document.getElementById('spread-bar');
+            document.getElementById('spread-basis').textContent = `Basis: ${data.nominalGdpBasis}`;
+            document.getElementById('spread-label').textContent = `Nominal GDP Growth (${data.nominalGdpBasis}) vs. 10Y Treasury Yield`;
+            spreadEl.textContent = formatPercent(spread, 2);
+            // Scale: 0 to 10%
+            const spreadPct = clamp((spread / 10) * 100, 0, 100);
+            spreadBar.style.width = `${spreadPct}%`;
 
-        // PANEL 2: PRODUCTIVITY
-        const prodEl = document.getElementById('prod-val');
-        const prodBar = document.getElementById('prod-bar');
-        prodEl.textContent = PRODUCTIVITY.toFixed(1) + "%";
-        // Scale: 0 to 6%
-        let prodPct = (PRODUCTIVITY / 6) * 100;
-        prodBar.style.width = prodPct + "%";
+            if(spread < 0) {
+                spreadEl.className = "big-number text-red";
+                spreadBar.className = "bar-fill bg-red";
+            } else {
+                spreadEl.className = "big-number text-green";
+                spreadBar.className = "bar-fill bg-green";
+            }
+            document.getElementById('spread-updated').textContent = `Last updated: ${data.lastUpdated.spread}`;
 
-        if(PRODUCTIVITY < 2.5) {
-            prodEl.className = "big-number text-red";
-            prodBar.className = "bar-fill bg-red";
-        } else {
-            prodEl.className = "big-number text-green";
-            prodBar.className = "bar-fill bg-green";
-        }
+            // PANEL 2: PRODUCTIVITY
+            const prodEl = document.getElementById('prod-val');
+            const prodBar = document.getElementById('prod-bar');
+            document.getElementById('prod-basis').textContent = `Basis: ${data.productivityBasis}`;
+            document.getElementById('prod-label').textContent = `Non-Farm Productivity Growth (${data.productivityBasis})`;
+            prodEl.textContent = formatPercent(data.productivityGrowth, 1);
+            // Scale: 0 to 6%
+            const prodPct = clamp((data.productivityGrowth / 6) * 100, 0, 100);
+            prodBar.style.width = `${prodPct}%`;
 
-        // PANEL 3: REAL RATE
-        const realEl = document.getElementById('real-val');
-        const realBar = document.getElementById('real-bar');
-        realEl.textContent = real_rate.toFixed(2) + "%";
-        // Scale: 0 to 4%
-        let realPct = (real_rate / 4) * 100;
-        realBar.style.width = realPct + "%";
+            if(data.productivityGrowth < 2.5) {
+                prodEl.className = "big-number text-red";
+                prodBar.className = "bar-fill bg-red";
+            } else {
+                prodEl.className = "big-number text-green";
+                prodBar.className = "bar-fill bg-green";
+            }
+            document.getElementById('prod-updated').textContent = `Last updated: ${data.lastUpdated.productivity}`;
 
-        if(real_rate < 1.0) {
-            realEl.className = "big-number text-green";
-            realBar.className = "bar-fill bg-green";
-        } else if (real_rate < 1.6) {
-            realEl.className = "big-number text-amber";
-            realBar.className = "bar-fill bg-amber";
-        } else {
-            realEl.className = "big-number text-red";
-            realBar.className = "bar-fill bg-red";
-        }
+            // PANEL 3: REAL RATE
+            const realEl = document.getElementById('real-val');
+            const realBar = document.getElementById('real-bar');
+            document.getElementById('real-basis').textContent = "Basis: 10Y TIPS real yield";
+            document.getElementById('real-label').textContent = "10Y TIPS real yield";
+            document.getElementById('real-proxy').textContent = `Trailing CPI proxy (${data.cpiBasis}): ${formatPercent(trailingRealProxy, 2)}`;
+            realEl.textContent = formatPercent(data.realYield10y, 2);
+            // Scale: 0 to 4%
+            const realPct = clamp((data.realYield10y / 4) * 100, 0, 100);
+            realBar.style.width = `${realPct}%`;
 
-        // PANEL 4: QUALITY
-        const qualText = document.getElementById('quality-text');
-        const qualDesc = document.getElementById('quality-desc');
+            if(data.realYield10y < 1.0) {
+                realEl.className = "big-number text-green";
+                realBar.className = "bar-fill bg-green";
+            } else if (data.realYield10y < 1.6) {
+                realEl.className = "big-number text-amber";
+                realBar.className = "bar-fill bg-amber";
+            } else {
+                realEl.className = "big-number text-red";
+                realBar.className = "bar-fill bg-red";
+            }
+            document.getElementById('real-updated').textContent = `Last updated: ${data.lastUpdated.realRate}`;
 
-        if(QUALITY_SCORE < 3) {
-            qualText.textContent = "CLEAN";
-            qualText.className = "big-number text-green";
-            qualDesc.textContent = "Data is organic and reliable.";
-        } else if (QUALITY_SCORE < 6) {
-            qualText.textContent = "DISTORTED";
-            qualText.className = "big-number text-amber";
-            qualDesc.textContent = "Skewed by Gold Exports / Inventory.";
-        } else {
-            qualText.textContent = "FAKE";
-            qualText.className = "big-number text-red";
-            qualDesc.textContent = "High probability of accounting mirage.";
-        }
+            // PANEL 4: DEBT DYNAMICS
+            const rgVal = document.getElementById('rg-val');
+            const debtVal = document.getElementById('debt-val');
+            const pbVal = document.getElementById('pb-val');
+            const pressureVal = document.getElementById('pressure-val');
+
+            rgVal.textContent = formatPercent(rMinusG, 2);
+            pbVal.textContent = formatPercent(data.primaryBalancePctGdp, 1);
+
+            if(Number.isFinite(data.debtToGdp)) {
+                debtVal.textContent = formatPercent(data.debtToGdp, 0);
+                const primaryDeficit = -data.primaryBalancePctGdp;
+                const pressure = (rMinusG / 100) * data.debtToGdp + primaryDeficit;
+                pressureVal.textContent = formatPercent(pressure, 1);
+
+                if(pressure <= 0) {
+                    pressureVal.className = "big-number text-green";
+                } else if (pressure <= 2.0) {
+                    pressureVal.className = "big-number text-amber";
+                } else {
+                    pressureVal.className = "big-number text-red";
+                }
+            } else {
+                debtVal.textContent = "(need DEBT_TO_GDP input)";
+                pressureVal.textContent = "--";
+                pressureVal.className = "big-number text-amber";
+            }
+            document.getElementById('debt-updated').textContent = `Last updated: ${data.lastUpdated.debtDynamics}`;
+
+            // PANEL 5: QUALITY
+            const qualText = document.getElementById('quality-text');
+            const qualDesc = document.getElementById('quality-desc');
+
+            if(data.qualityScore < 3) {
+                qualText.textContent = "CLEAN";
+                qualText.className = "big-number text-green";
+                qualDesc.textContent = "Data is organic and reliable.";
+            } else if (data.qualityScore < 6) {
+                qualText.textContent = "DISTORTED";
+                qualText.className = "big-number text-amber";
+                qualDesc.textContent = "Skewed by Gold Exports / Inventory.";
+            } else {
+                qualText.textContent = "FAKE";
+                qualText.className = "big-number text-red";
+                qualDesc.textContent = "High probability of accounting mirage.";
+            }
+            document.getElementById('quality-updated').textContent = `Last updated: ${data.lastUpdated.quality}`;
+
+            // PANEL 6: PRIMARY BALANCE
+            const primaryEl = document.getElementById('primary-val');
+            const primaryBar = document.getElementById('primary-bar');
+            primaryEl.textContent = formatPercent(data.primaryBalancePctGdp, 1);
+            // Map +2% (surplus) to 0% width, -10% (deficit) to 100% width.
+            const primaryMax = 2;
+            const primaryMin = -10;
+            const primaryPct = clamp(((primaryMax - data.primaryBalancePctGdp) / (primaryMax - primaryMin)) * 100, 0, 100);
+            primaryBar.style.width = `${primaryPct}%`;
+
+            if(data.primaryBalancePctGdp >= -1) {
+                primaryEl.className = "big-number text-green";
+                primaryBar.className = "bar-fill bg-green";
+            } else if (data.primaryBalancePctGdp >= -4) {
+                primaryEl.className = "big-number text-amber";
+                primaryBar.className = "bar-fill bg-amber";
+            } else {
+                primaryEl.className = "big-number text-red";
+                primaryBar.className = "bar-fill bg-red";
+            }
+            document.getElementById('primary-updated').textContent = `Last updated: ${data.lastUpdated.primaryBalance}`;
+
+            // PANEL 7: INTEREST BURDEN
+            const interestEl = document.getElementById('interest-val');
+            const interestBar = document.getElementById('interest-bar');
+            const interestBasis = document.getElementById('interest-basis');
+            const interestDesc = document.getElementById('interest-desc');
+            const useRevenue = Number.isFinite(data.netInterestPctRevenue);
+            const interestValue = useRevenue ? data.netInterestPctRevenue : data.netInterestPctGdp;
+            const scaleMax = useRevenue ? 30 : 8;
+
+            interestEl.textContent = formatMaybe(interestValue, 1);
+            interestBasis.textContent = useRevenue ? "Basis: % of Revenue" : "Basis: % of GDP";
+            interestDesc.textContent = useRevenue ? "Net interest outlays (revenue share)" : "Net interest outlays (GDP share)";
+
+            const interestPct = Number.isFinite(interestValue) ? clamp((interestValue / scaleMax) * 100, 0, 100) : 0;
+            interestBar.style.width = `${interestPct}%`;
+
+            if(Number.isFinite(interestValue)) {
+                if(useRevenue) {
+                    if(interestValue < 10) {
+                        interestEl.className = "big-number text-green";
+                        interestBar.className = "bar-fill bg-green";
+                    } else if (interestValue < 20) {
+                        interestEl.className = "big-number text-amber";
+                        interestBar.className = "bar-fill bg-amber";
+                    } else {
+                        interestEl.className = "big-number text-red";
+                        interestBar.className = "bar-fill bg-red";
+                    }
+                } else {
+                    if(interestValue < 2.5) {
+                        interestEl.className = "big-number text-green";
+                        interestBar.className = "bar-fill bg-green";
+                    } else if (interestValue < 4.5) {
+                        interestEl.className = "big-number text-amber";
+                        interestBar.className = "bar-fill bg-amber";
+                    } else {
+                        interestEl.className = "big-number text-red";
+                        interestBar.className = "bar-fill bg-red";
+                    }
+                }
+            } else {
+                interestEl.className = "big-number text-amber";
+                interestBar.className = "bar-fill bg-amber";
+            }
+            document.getElementById('interest-updated').textContent = `Last updated: ${data.lastUpdated.interestBurden}`;
+        };
+
+        updateDashboard(macroData);
 
     </script>
 </body>

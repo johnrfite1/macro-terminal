@@ -16,7 +16,7 @@ When a nation accumulates large debts, there are only a few ways out:
 
 This tool tracks whether option #4 is working.
 
-## The Four Gauges
+## The Gauges
 
 ### 1. Deleveraging Engine (The Spread)
 
@@ -25,6 +25,8 @@ Spread = Nominal GDP Growth - 10Y Treasury Yield
 ```
 
 **Why it matters:** If the economy grows faster than the interest rate on debt, the debt-to-GDP ratio naturally shrinks over time. A positive spread means debt is "melting away" without requiring painful cuts or defaults.
+
+**Basis rule:** Nominal GDP growth and the 10Y yield must be on the same basis (e.g., SAAR or YoY). Do not mix bases.
 
 | Value | Signal |
 |-------|--------|
@@ -47,10 +49,11 @@ Non-Farm Productivity Growth (%)
 ### 3. Real Interest Rate
 
 ```
-Real Rate = 10Y Treasury Yield - CPI Inflation
+Market Real Yield = 10Y TIPS Real Yield
+Trailing CPI Proxy = 10Y Treasury Yield - CPI (YoY)
 ```
 
-**Why it matters:** High real rates mean borrowers pay back more in purchasing power than they received. This crushes debtors (including governments). Low/negative real rates ease the debt burden.
+**Why it matters:** High real rates mean borrowers pay back more in purchasing power than they received. This crushes debtors (including governments). Low/negative real rates ease the debt burden. The TIPS real yield is the primary signal, with a trailing CPI proxy shown as a check.
 
 | Value | Signal |
 |-------|--------|
@@ -72,6 +75,43 @@ Distortion Score (0-10 scale, manual assessment)
 | 3-5 (Amber) | Some distortion (gold/inventory noise) |
 | 6-10 (Red) | High probability of accounting mirage |
 
+### 5. Primary Balance (% of GDP)
+
+```
+Primary Balance = Revenues - Non-Interest Spending
+```
+
+**Why it matters:** A healthy primary balance offsets debt dynamics when r − g is unfavorable. Persistent deficits make deleveraging much harder.
+
+| Value | Signal |
+|-------|--------|
+| Surplus / near-balance (Green) | Fiscal tailwind |
+| Moderate deficit (Amber) | Manageable drag |
+| Large deficit (Red) | Structural headwind |
+
+### 6. Interest Burden
+
+```
+Net Interest Outlays (% of GDP or % of Revenue)
+```
+
+**Why it matters:** High interest costs squeeze fiscal capacity and can force austerity or inflation, even if growth is solid.
+
+| Value | Signal |
+|-------|--------|
+| Low (Green) | Room to maneuver |
+| Medium (Amber) | Watch for rollover risk |
+| High (Red) | Debt service pressure |
+
+### 7. Debt Dynamics (Mini Panel)
+
+```
+r − g = 10Y Treasury Yield − Nominal GDP Growth
+Debt/GDP pressure ≈ (r − g)·Debt/GDP + Primary Deficit
+```
+
+**Why it matters:** This ties the spread and fiscal stance together into a single pressure estimate. If it is positive and large, debt ratios tend to rise.
+
 ## Usage
 
 ### Quick Start
@@ -85,13 +125,54 @@ Distortion Score (0-10 scale, manual assessment)
 
 3. Update the data inputs in the `<script>` section:
    ```javascript
-   const DATA_DATE = "JAN 08 2026";
-   const GDP_REAL = 5.4;        // Atlanta Fed GDPNow
-   const INFLATION = 2.4;       // CPI Estimate
-   const YIELD_10Y = 4.18;      // 10Y Treasury
-   const PRODUCTIVITY = 4.5;    // Recent Trend
-   const QUALITY_SCORE = 4;     // 0=Good, 10=Bad
+   const macroData = {
+     dataDate: "JAN 08 2026",
+     nominalGdpGrowth: 5.9,          // SAAR (quarterly annualized), %
+     nominalGdpBasis: "SAAR (quarterly annualized)",
+     yield10y: 4.18,                 // Nominal annual yield, %
+     cpiInflation: 2.4,              // YoY, %
+     cpiBasis: "YoY",
+     realYield10y: 1.6,              // 10Y TIPS real yield, %
+     productivityGrowth: 4.5,        // YoY, %
+     productivityBasis: "YoY",
+     primaryBalancePctGdp: -3.2,     // + surplus, - deficit
+     netInterestPctGdp: 2.6,         // % of GDP
+     netInterestPctRevenue: null,    // % of revenue (optional)
+     debtToGdp: 120,                 // % of GDP (optional)
+     qualityScore: 4,                // 0=Good, 10=Bad
+     lastUpdated: {
+       spread: "JAN 05 2026",
+       productivity: "DEC 31 2025",
+       realRate: "JAN 05 2026",
+       debtDynamics: "JAN 05 2026",
+       quality: "JAN 05 2026",
+       primaryBalance: "OCT 31 2025",
+       interestBurden: "OCT 31 2025"
+     }
+   };
    ```
+
+## Inputs & Units
+
+All growth-rate inputs must share the same basis where they are compared. The spread uses nominal GDP growth and the 10Y yield on the same basis (SAAR or YoY). CPI YoY is only used for the trailing real-rate proxy.
+
+| Variable | Definition | Units / Basis |
+|---------|------------|---------------|
+| `dataDate` | Display date | Text |
+| `nominalGdpGrowth` | Nominal GDP growth | %, basis declared in `nominalGdpBasis` |
+| `nominalGdpBasis` | Basis label for nominal GDP growth | "SAAR (quarterly annualized)" or "YoY" |
+| `yield10y` | 10Y Treasury yield | Nominal annual %, same basis as `nominalGdpGrowth` |
+| `cpiInflation` | CPI inflation | %, basis declared in `cpiBasis` |
+| `cpiBasis` | Basis label for CPI | "YoY" (recommended for proxy) |
+| `realYield10y` | 10Y TIPS real yield | % |
+| `productivityGrowth` | Non-farm productivity growth | %, basis in `productivityBasis` |
+| `productivityBasis` | Basis label for productivity | "YoY" or "QoQ SAAR" |
+| `primaryBalancePctGdp` | Primary balance | % of GDP (surplus positive) |
+| `netInterestPctGdp` | Net interest outlays | % of GDP |
+| `netInterestPctRevenue` | Net interest outlays | % of revenue (optional) |
+| `debtToGdp` | Debt-to-GDP ratio | % of GDP (optional) |
+| `qualityScore` | Distortion score | 0-10 scale |
+| `lastUpdated` | Per-metric timestamps | Text strings |
 
 ### Data Sources
 
@@ -101,6 +182,10 @@ Distortion Score (0-10 scale, manual assessment)
 | 10Y Treasury | [Treasury.gov](https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve) | Daily |
 | CPI Inflation | [BLS CPI](https://www.bls.gov/cpi/) | Monthly |
 | Productivity | [BLS Productivity](https://www.bls.gov/lpc/) | Quarterly |
+
+## Beautiful Deleveraging Logic
+
+The spread (nominal growth minus interest rates) is necessary but not sufficient. A positive spread can still fail to reduce debt if the fiscal primary balance is deeply negative or if interest costs absorb too much revenue. Adding Primary Balance and Interest Burden makes the dashboard harder to misread by tying growth to fiscal reality and debt service capacity.
 
 ## The Theory Behind It
 
